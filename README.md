@@ -17,7 +17,7 @@ Only the Shelfmark Prowlarr release adapter is currently allowed through this Bo
 
 ## Compatibility and installation
 
-Moonbase Books `2.3.1.100` passed 135 backend smoke checks, 14 Shelfmark regression tests and 17 live API checks on Jellyfin `12.1` with Shelfmark Lite `1.3.15`. The exact release ZIP was deployed successfully, and a regular user completed web search and release selection without an external page or another login. These tests do not certify other server versions. Upstream Moonbase has Emby features, but **this Books bridge is not available for Emby yet**.
+Moonbase Books `2.3.1.100` passed 135 backend smoke checks, 14 Shelfmark regression tests and 17 live API checks on [Jellyfin `12.1`](https://github.com/jellyfin/jellyfin/releases/tag/v12.1) with [Shelfmark Lite `1.3.15`](https://github.com/calibrain/shelfmark/releases/tag/v1.3.15). The exact release ZIP was deployed successfully, and a regular user completed web search and release selection without an external page or another login. These tests do not certify other server versions. Upstream Moonbase has Emby features, but **this Books bridge is not available for Emby yet**.
 
 Install the Jellyfin artifact from this fork as a **replacement** for official Moonbase. It retains the upstream Jellyfin assembly name and plugin GUID, so the two plugins cannot coexist. Back up the plugin files, configuration, and Books keyring; remove the official Moonbase repository entry from Jellyfin before replacement. `autoUpdate: false` in the fork package is not enough to prevent the old catalog from offering an upstream replacement. No Moonbase Books updater catalog is published currently; install future updates deliberately after checking compatibility.
 
@@ -38,3 +38,9 @@ The exact CI entry point is [`.github/workflows/books-plugin.yml`](.github/workf
 ## License and upstream
 
 Moonbase Books retains the GNU GPL version 3 license and upstream notices from [Moonfin-Client/Plugin](https://github.com/Moonfin-Client/Plugin). See [LICENSE](LICENSE) and the preserved [upstream README](README.upstream.md). This fork is separate from official Moonbase releases.
+
+## Native client startup evidence
+
+The matching release-signed Moonfin Books Android APK reached server selection in an Android 15 emulator. This verifies native startup; the Books search screenshots above show the plugin-served web build. Physical Android Books requests and playback have not been tested.
+
+<img src="docs/screenshots/android-first-launch.png" alt="Matching Moonfin Books Android APK at server selection" width="300">

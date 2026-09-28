@@ -1,6 +1,6 @@
 # Set up Moonbase Books on Jellyfin
 
-This is an administrator guide. End users install a [Moonfin Books client](https://github.com/ZepiGit/Moonfin-Books/blob/main/docs/INSTALL.md) or open the web app served by this plugin. The released **Moonbase Books 2.3.1.100** ZIP was deployed and checked with **Jellyfin 12.1** and **Shelfmark Lite 1.3.15**. Other version combinations need independent checks; this is not a general compatibility promise.
+This is an administrator guide. End users install a [Moonfin Books client](https://github.com/ZepiGit/Moonfin-Books/blob/main/docs/INSTALL.md) or open the web app served by this plugin. The released **Moonbase Books 2.3.1.100** ZIP was deployed and checked with **[Jellyfin 12.1](https://github.com/jellyfin/jellyfin/releases/tag/v12.1)** and **[Shelfmark Lite 1.3.15](https://github.com/calibrain/shelfmark/releases/tag/v1.3.15)**. Other version combinations need independent checks; this is not a general compatibility promise.
 
 ## 1. Prepare the dependencies
 
