@@ -39,8 +39,12 @@ The exact CI entry point is [`.github/workflows/books-plugin.yml`](.github/workf
 
 Moonbase Books retains the GNU GPL version 3 license and upstream notices from [Moonfin-Client/Plugin](https://github.com/Moonfin-Client/Plugin). See [LICENSE](LICENSE) and the preserved [upstream README](README.upstream.md). This fork is separate from official Moonbase releases.
 
-## Native client startup evidence
+## Native build evidence
 
-The matching release-signed Moonfin Books Android APK reached server selection in an Android 15 emulator. This verifies native startup; the Books search screenshots above show the plugin-served web build. Physical Android Books requests and playback have not been tested.
+The Linux screenshot shows Books search in the released x64 tar package, running under Ubuntu 24.04/Xvfb with an existing regular Jellyfin session. The Android screenshot shows the exact release-signed APK at first launch in an Android 15 emulator. These captures do not establish physical-device playback or an Android Books request.
 
-<img src="docs/screenshots/android-first-launch.png" alt="Matching Moonfin Books Android APK at server selection" width="300">
+| Native Linux Books search | Native Android first launch |
+| --- | --- |
+| ![Books search in the native Linux release](docs/screenshots/books-search-linux-native.png) | <img src="docs/screenshots/android-first-launch.png" alt="Moonfin Books Android APK at server selection" width="240"> |
+
+Matching app downloads are available in [Moonfin Books Preview 1](https://github.com/ZepiGit/Moonfin-Books/releases/tag/v2.6.0-books.1). Follow the [client installation steps](https://github.com/ZepiGit/Moonfin-Books/blob/main/docs/INSTALL.md); iOS/tvOS IPAs require Apple signing and provisioning.
