@@ -11,8 +11,9 @@ concurrency:
   cancel-in-progress: true
 env:
   FLUTTER_VERSION: '3.47.2'
-  BOOKS_VERSION: '2.3.1.0'
-  APPS_SOURCE_REF: 'f22d305159be9160a9a9a484a2d2e13714539853'
+  BOOKS_VERSION: '2.3.1.100'
+  SKIP_MANIFEST_UPDATE: '1'
+  APPS_SOURCE_REF: 'f357aef2db69f8e28ca946794fc973fb8c626943'
 jobs:
   jellyfin:
     runs-on: ubuntu-latest
@@ -26,6 +27,8 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Books backend checks
         run: dotnet run --project Jellyfin/backend/BooksProxy.SmokeTests -c Release
+      - name: Shelfmark regression tests
+        run: dotnet test Jellyfin/tests/Moonfin.Server.Tests/Moonfin.Server.Tests.csproj -c Release --filter FullyQualifiedName~ShelfmarkProxyServiceTests
       - uses: actions/checkout@v4
         with:
           repository: ZepiGit/Moonfin-Books
@@ -41,7 +44,7 @@ jobs:
       - name: Prepare Books web bundle
         run: |
           mkdir -p Jellyfin/frontend
-          rsync -a --delete apps/build/web/ Jellyfin/frontend/
+          rsync -a --delete --exclude config.json --exclude theme/ apps/build/web/ Jellyfin/frontend/
           rsync -a apps/web/theme/ Jellyfin/frontend/theme/
           python3 apps/scripts/brand-books-web.py Jellyfin/frontend
       - name: Build and verify plugin

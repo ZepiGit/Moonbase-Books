@@ -13,15 +13,15 @@ flowchart LR
 
 The Jellyfin controller exposes five Books operations: `Status`, `Search`, `Releases`, `Download`, and `Active`. It derives `Remote-User` and `Remote-Groups` from validated Jellyfin identity claims; client-supplied identity headers, cookies, and tokens are not forwarded to Shelfmark. The `admins` group is sent only for a validated Jellyfin administrator. Status is scoped to the caller. Release jobs are user bound, and source IDs are returned as opaque, expiring, user-bound handles. Keep the plugin's persistent data-protection keyring backed up and private.
 
-Only the Shelfmark Prowlarr release adapter is currently allowed through this Books API. Shelfmark still needs the operator's own Prowlarr indexers, downloader, and import paths. See [Server setup](docs/SERVER_SETUP.md) for a concrete configuration and verification sequence.
+Only the Shelfmark Prowlarr release adapter is currently allowed through this Books API. Shelfmark still needs the operator's own Prowlarr indexers, downloader, categories, and persistent import paths. See [Server setup](docs/SERVER_SETUP.md) for a concrete configuration and verification sequence.
 
 ## Compatibility and installation
 
-The Books backend version `2.3.1.0` passed 135 smoke checks and was tested with Jellyfin `12.1` and Shelfmark `1.3.15`. Other combinations need independent validation. Upstream Moonbase has Emby features, but **this Books bridge is not available for Emby yet**.
+The initial Books backend version `2.3.1.0` passed 135 smoke checks and was tested with Jellyfin `12.1` and Shelfmark `1.3.15`. The planned `2.3.1.100` package is a source-compatible Books revision that still needs package validation; these tests do not certify other server versions. Upstream Moonbase has Emby features, but **this Books bridge is not available for Emby yet**.
 
-Install the Jellyfin artifact from this fork's build as a **replacement** for official Moonbase. It retains the upstream Jellyfin assembly name and plugin GUID, so the two builds must not be installed side by side. Preserve the existing plugin configuration before replacement and keep only one Moonfin Server assembly in the active plugins directory. The custom package metadata sets `autoUpdate: false`; update this fork deliberately after checking compatibility.
+Install the Jellyfin artifact from this fork as a **replacement** for official Moonbase. It retains the upstream Jellyfin assembly name and plugin GUID, so the two plugins cannot coexist. Back up the plugin files, configuration, and Books keyring; remove the official Moonbase repository entry from Jellyfin before replacement. `autoUpdate: false` in the fork package is not enough to prevent the old catalog from offering an upstream replacement. No Moonbase Books updater catalog is published currently; install future updates deliberately after checking compatibility.
 
-The web app is served by the plugin at `https://jellyfin.example.org/Moonfin/Web/`. A separate browser login is not needed after signing in to Moonfin Books. Existing native Moonfin apps do not gain the new page through a plugin update alone.
+The web app is served by the plugin at `https://jellyfin.example.org/Moonfin/Web/` and includes Books. Official native Moonfin apps continue using their normal Moonbase features on this server, but do not gain the Books tab through a plugin update. Install a [Moonfin Books native fork package](https://github.com/ZepiGit/Moonfin-Books/blob/main/docs/INSTALL.md) for that tab; the fork's app-local data is separate from official Moonfin. See [Moonbase Books Releases](https://github.com/ZepiGit/Moonbase-Books/releases) for packages **after** validation and publication. No public release is claimed by this README.
 
 ## Web screenshots
 
