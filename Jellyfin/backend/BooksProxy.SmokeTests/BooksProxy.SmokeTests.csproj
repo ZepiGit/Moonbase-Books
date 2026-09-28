@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Compile Include="../Services/ShelfmarkProxyService.cs" Link="ShelfmarkProxyService.cs" />
+    <Compile Include="../Services/BooksReleaseState.cs" Link="BooksReleaseState.cs" />
+    <Compile Include="../Api/BooksProxyController.cs" Link="BooksProxyController.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+</Project>

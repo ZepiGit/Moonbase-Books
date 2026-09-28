@@ -19,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="BooksProxy.SmokeTests/**/*.cs" />
     <!-- Host-provided by Jellyfin: referenced for compile, but not copied/shipped (ExcludeAssets=runtime). -->
     <PackageReference Include="Jellyfin.Controller" Version="10.10.0">
       <PrivateAssets>all</PrivateAssets>

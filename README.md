@@ -1,183 +1,40 @@
-<h1 align="center">Moonbase, the server plugin for Moonfin!</h1>
-<h3 align="center">Moonbase is the server plugin that powers the Moonfin experience on both Jellyfin and Emby.</h3>
+# Moonbase Books
 
----
+Moonbase Books is a fork of [Moonfin-Client/Plugin](https://github.com/Moonfin-Client/Plugin). Its Jellyfin plugin adds an authenticated Books bridge and serves the matching [Moonfin Books](https://github.com/ZepiGit/Moonfin-Books) web app. Users search for ebooks or audiobooks, choose a release, queue a download, and view their own status from the existing Jellyfin session.
 
-<p align="center">
-   <img width="1920" height="1080" alt="Moonbase" src="https://github.com/user-attachments/assets/5d67e8d0-5972-49f2-89d5-376357c8997b" />
-</p>
-
-[![License](https://img.shields.io/github/license/Moonfin-Client/Plugin.svg)](https://github.com/Moonfin-Client/Plugin) [![Release](https://img.shields.io/github/release/Moonfin-Client/Plugin.svg)](https://github.com/Moonfin-Client/Plugin/releases) [![Github Downloads](https://img.shields.io/github/downloads/Moonfin-Client/Plugin/total?label=Downloads)](https://github.com/Moonfin-Client/Plugin/releases) 
-
-
-## What is Moonbase?
-
-Moonbase is a server plugin for **Jellyfin and Emby** that gives every Moonfin client its shared backbone. It syncs your settings across devices, hosts the Moonfin web app right on your server, adds extra rating sources, connects your library to Seerr, and gives admins server-wide defaults and tools.
-
-> **Recommended:** if you use any Moonfin client, install Moonbase on your server for the best experience.
-
-This repo ships two plugins from one place: a Jellyfin plugin under `Jellyfin/` and an Emby plugin under `Emby/`.
-
-## Installation
-
-Moonbase needs **Jellyfin 10.10 or newer** or **Emby 4.8 or newer**. The wiki's [Installation](https://github.com/Moonfin-Client/Plugin/wiki/Installation) page has the steps plus updating and uninstalling.
-
-### Jellyfin
-
-The plugin repository is the recommended route, because it updates through the catalog like any other plugin:
-
-1. Open the Jellyfin Dashboard, then go to Administration > Plugins > Repositories.
-2. Add a repository:
-   - **Name:** `Moonbase`
-   - **URL:** `https://raw.githubusercontent.com/Moonfin-Client/Plugin/refs/heads/master/manifest.json`
-3. Go to Catalog, find **Moonbase**, and install it.
-4. Restart Jellyfin.
-
-<details>
-<summary><b>Advanced:</b> manual install</summary>
-
-1. Download the latest `Moonfin.Server-x.x.x.x.zip` from [Releases](https://github.com/Moonfin-Client/Plugin/releases)
-2. Extract it into your Jellyfin plugins folder:
-   | Platform | Path |
-   |----------|------|
-   | Linux | `/var/lib/jellyfin/plugins/Moonfin/` |
-   | Docker | `/config/plugins/Moonfin/` |
-   | Windows | `%ProgramData%\Jellyfin\Server\plugins\Moonfin\` |
-3. Restart Jellyfin
-
-
-</details>
-
-### Emby
-
-The Emby plugin is a drop-in zip, not a catalog plugin:
-
-1. Download the latest `Moonfin.Emby-x.x.x.x.zip` from [Releases](https://github.com/Moonfin-Client/Plugin/releases).
-2. Extract its contents (`Emby.Plugins.Moonfin.dll`, `SharpCompress.dll`, and the `web` folder) into your Emby plugins folder:
-   | Platform | Path |
-   |----------|------|
-   | Linux | `/var/lib/emby/plugins/` |
-   | Docker | `/config/plugins/` |
-   | Windows | `%AppData%\Emby-Server\programdata\plugins\` |
-3. Restart Emby.
-
-## Opening the Moonfin Web App
-
-Moonbase serves the Moonfin web app on your own server, so you can open and bookmark it directly:
-
-`https://your-server-host/Moonfin/Web/`
-
-> **Not loading after a fresh install?** Run the **Moonfin Startup** task once (Dashboard > Scheduled Tasks), then refresh your browser.
-
-<details>
-<summary><b>Advanced:</b> a Moonfin button in the stock Jellyfin web header</summary>
-
-On Jellyfin, you can add a one-click Moonfin button to the stock web header (next to your user icon) by installing the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) plugin:
-
-1. Add its plugin repository: `https://www.iamparadox.dev/jellyfin/plugins/manifest.json`
-2. Install **File Transformation** from the catalog and restart Jellyfin.
-3. Force refresh your browser.
-
-To hide the button while keeping the plugin, add this to Branding > Custom CSS:
-
-```css
-.headerMoonfinButton { display: none !important; }
+```mermaid
+flowchart LR
+    A[Moonfin Books app or web] -->|Jellyfin login| B[Jellyfin + Moonbase Books]
+    B -->|Validated user and admin role| C[Private Shelfmark API]
+    C --> D[Operator's Prowlarr indexers]
+    C --> E[Operator's download client]
+    E --> F[Configured import destination]
 ```
 
-On Emby, the web app is served the same way at `/Moonfin/Web/`, but there's no header button because Emby has no equivalent injection path.
+The Jellyfin controller exposes five Books operations: `Status`, `Search`, `Releases`, `Download`, and `Active`. It derives `Remote-User` and `Remote-Groups` from validated Jellyfin identity claims; client-supplied identity headers, cookies, and tokens are not forwarded to Shelfmark. The `admins` group is sent only for a validated Jellyfin administrator. Status is scoped to the caller. Release jobs are user bound, and source IDs are returned as opaque, expiring, user-bound handles. Keep the plugin's persistent data-protection keyring backed up and private.
 
-<img width="1521" height="164" alt="Moonfin header button" src="https://github.com/user-attachments/assets/bcb69e4b-edbe-4d1f-b9f1-dc81822d55d9" />
+Only the Shelfmark Prowlarr release adapter is currently allowed through this Books API. Shelfmark still needs the operator's own Prowlarr indexers, downloader, and import paths. See [Server setup](docs/SERVER_SETUP.md) for a concrete configuration and verification sequence.
 
-</details>
+## Compatibility and installation
 
-## Features
+The Books backend version `2.3.1.0` passed 135 smoke checks and was tested with Jellyfin `12.1` and Shelfmark `1.3.15`. Other combinations need independent validation. Upstream Moonbase has Emby features, but **this Books bridge is not available for Emby yet**.
 
-- **Cross-device settings sync**, so your preferences follow you between web, TV, mobile, and desktop, with an optional per-device profile for desktop, mobile, and TV.
-- **The Moonfin web app** hosted at `/Moonfin/Web/`, running side by side with the stock web interface.
-- **Media bar and home screen data** resolved on the server and shared across clients.
-- **Recommendations scored on the server** (Jellyfin), matching similar titles on genres, tags, people, studios, franchise, release year and rating, and only showing what each user is allowed to see. On Jellyfin 12 the same scoring reaches every client, including the stock web interface.
-- **Extra rating sources** through MDBList and TMDB, with the API keys kept on the server.
-- **Next air dates** for series, taken from the Sonarr your Seerr is connected to, or from TMDB through the server when there's no Sonarr.
-- **Anime filler and recap markers** (Jellyfin) that badge episodes as Filler, Mixed, Recap or canon using AnimeFillerList and MyAnimeList, plus Subbed and Dubbed pills read from the audio tracks in your own files. No account or API key needed.
-- **Seerr integration** with a built-in proxy, single sign-on, and optional request and issue notifications. The step-by-step guide is [Seerr Setup](https://github.com/Moonfin-Client/Plugin/wiki/Seerr-Setup).
-- **Push notifications** that reach Moonfin apps even when they are closed, covering Seerr activity, new media added to your library, and admin broadcasts. See [Seerr Notifications](https://github.com/Moonfin-Client/Plugin/wiki/Seerr-Notifications).
-- **Admin tools** for setting server-wide defaults across every client setting, pushing them to existing users, and broadcasting a message to everyone at once.
-- **Settings backup and restore** (Jellyfin): Moonbase keeps a spare copy of your server-wide settings and offers to put it back if they ever come back reset.
-- **App reports on Emby**, so the apps' Send report to server button works there too. Jellyfin has this built in.
-- **Server messages**: an admin can write a note (title, Markdown body, color, audience, start and end dates, an optional link button) that shows up in people's apps, even if they were offline when it was sent.
-- **Custom themes** with a built-in editor, plus server-side upload and validation.
-- **Retro games** support for browsing and playing game libraries, with saves synced per user. On Jellyfin, an optional switch lets PSP games start in the web app. See [Retro Games](https://github.com/Moonfin-Client/Plugin/wiki/Retro-Games).
-- **Custom rows** built from Letterboxd, TMDB, MDBList and IMDb lists, cached on the server.
-- **An active downloads dashboard** with live transcode metrics in the admin panel, plus a per-client view so a transcoded download can show its own progress and ETA.
-- **Personal ratings served back to clients**, so a library can be sorted by your own rating and filtered by liked or disliked, which neither server can do on its own.
-- **Audiobook bookmarks and notes** stored on the server and synced between clients.
+Install the Jellyfin artifact from this fork's build as a **replacement** for official Moonbase. It retains the upstream Jellyfin assembly name and plugin GUID, so the two builds must not be installed side by side. Preserve the existing plugin configuration before replacement and keep only one Moonfin Server assembly in the active plugins directory. The custom package metadata sets `autoUpdate: false`; update this fork deliberately after checking compatibility.
 
-## Configuration
+The web app is served by the plugin at `https://jellyfin.example.org/Moonfin/Web/`. A separate browser login is not needed after signing in to Moonfin Books. Existing native Moonfin apps do not gain the new page through a plugin update alone.
 
-Open your server dashboard, go to Plugins, and select **Moonbase**. The [Admin Guide](https://github.com/Moonfin-Client/Plugin/wiki/Admin-Guide) walks through every tab. The main things to set up:
+## Web screenshots
 
-- Your Seerr URL and whether Seerr is enabled
-- Shared MDBList and TMDB API keys, so individual users don't need their own
-- Whether Moonbase Sync is on (required for the Seerr and ratings integrations)
-- On Jellyfin, anime markers and whether Moonfin Recommends handles similar items
-- Default user settings that new users inherit, with a button to push them to existing users
-- Server messages and the quick broadcast
-- Web startup options and custom theme uploads
+These images show the **finished web build** included with the plugin. The narrow view is a responsive browser capture, not a native phone or TV screenshot.
 
-Users change their own preferences from the in-app settings page in any Moonfin client. Settings are stored per user and shared across clients, with an optional per-device override for desktop, mobile, and TV.
+| Desktop web | Narrow responsive web |
+| --- | --- |
+| ![Books search in the finished desktop web build](docs/screenshots/books-search-desktop.png) | ![Books search in the finished narrow web build](docs/screenshots/books-search-narrow.png) |
 
-<details>
-<summary><b>Advanced:</b> the Defaults tab</summary>
+## Build from source
 
-The Defaults tab covers every client setting in its own subtab, from General Style and Details Screen through Playback and Integrations. Each control mirrors what the clients actually offer, so a default set here is one a client can honor. A setting left on Not set (user decides) passes the user's own choice through.
+The exact CI entry point is [`.github/workflows/books-plugin.yml`](.github/workflows/books-plugin.yml). Its `APPS_SOURCE_REF` pins the reviewed Moonfin Books commit for reproducible plugin/web packaging. The workflow runs the Books backend smoke checks, builds that exact app revision for web, then invokes `Jellyfin/build.sh` and `scripts/package-books.py` to produce the Jellyfin ZIP and checksum. It uploads CI artifacts and does not create a public release.
 
-</details>
+## License and upstream
 
-## Documentation
-
-The deeper reference material lives in the [Wiki](https://github.com/Moonfin-Client/Plugin/wiki):
-
-| Page | What it covers |
-|------|----------------|
-| [Installation](https://github.com/Moonfin-Client/Plugin/wiki/Installation) | The Jellyfin catalog route, the Emby zip, the first things to switch on, updating and uninstalling |
-| [Admin Guide](https://github.com/Moonfin-Client/Plugin/wiki/Admin-Guide) | The plugin page tab by tab, the scheduled tasks, and what differs on Emby |
-| [Common Problems](https://github.com/Moonfin-Client/Plugin/wiki/Common-Problems) | Plain fixes for catalog, web app, header button, sync, reset settings, Seerr, ratings, rows, anime markers and games trouble |
-| [API Reference](https://github.com/Moonfin-Client/Plugin/wiki/API-Reference) | Every plugin endpoint, with methods, auth, the Seerr config response, and the server messages endpoints |
-| [Settings Sync](https://github.com/Moonfin-Client/Plugin/wiki/Settings-Sync) | How sync works, the settings envelope, and the full list of synced settings |
-| [Data Locations](https://github.com/Moonfin-Client/Plugin/wiki/Data-Locations) | Where the plugin stores user settings, themes, saves, caches, and the settings backup on the server |
-| [Retro Games](https://github.com/Moonfin-Client/Plugin/wiki/Retro-Games) | Game libraries, cores, ROMs, BIOS, saves, and in-browser play |
-| [Seerr Setup](https://github.com/Moonfin-Client/Plugin/wiki/Seerr-Setup) | The plain step-by-step guide to connecting Seerr |
-| [Seerr Notifications](https://github.com/Moonfin-Client/Plugin/wiki/Seerr-Notifications) | Push delivery, webhooks, notification types, and self-hosted relays |
-| [Themes](https://github.com/Moonfin-Client/Plugin/wiki/Themes) | The theme editor and custom theme uploads |
-| [Reverse Proxy and Seerr](https://github.com/Moonfin-Client/Plugin/wiki/Reverse-Proxy-and-Seerr) | Path forwarding and Seerr single sign-on behind a proxy |
-| [Building from Source](https://github.com/Moonfin-Client/Plugin/wiki/Building-from-Source) | Building the Jellyfin and Emby plugins from this repo |
-
-## Contributing
-
-Contributions are welcome. Check the existing issues first, open an issue before starting a large change, match the existing code style, and test your changes on desktop and mobile. Features that would help all Jellyfin or Emby users are worth proposing upstream first.
-
-To submit a change, fork the repo, create a feature branch, make your changes with clear commit messages, and open a pull request with a clear description.
-
-## Support and Community
-
-- **Issues** for bugs and feature requests: [GitHub Issues](https://github.com/Moonfin-Client/Plugin/issues)
-- **Discussions** for questions and ideas: [GitHub Discussions](https://github.com/Moonfin-Client/Plugin/discussions)
-
-## Credits
-
-Moonfin is built on the work of others:
-
-- **[Jellyfin Project](https://jellyfin.org)** for the foundation and upstream codebase
-- **[Druidblack](https://github.com/Druidblack)** for the original MDBList Ratings plugin
-- **Moonfin Contributors** for everything they have added to the project
-
-## License
-
-This project is licensed under GPL-3.0. See the [LICENSE](LICENSE) file for details.
-
----
-
-<p align="center">
-   <strong>Moonfin</strong> is an independent project and is not affiliated with the Jellyfin or Emby projects.<br>
-   <a href="https://github.com/Moonfin-Client">Back to the main Moonfin project</a>
-</p>
+Moonbase Books retains the GNU GPL version 3 license and upstream notices from [Moonfin-Client/Plugin](https://github.com/Moonfin-Client/Plugin). See [LICENSE](LICENSE) and the preserved [upstream README](README.upstream.md). This fork is separate from official Moonbase releases.

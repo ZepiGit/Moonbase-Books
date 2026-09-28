@@ -171,6 +171,7 @@ public class MoonfinController : ControllerBase
             TmdbAvailable = !string.IsNullOrWhiteSpace(config?.TmdbApiKey),
             MessagesSupported = true,
             RecommendationsSupported = config?.RecommendationsProviderEnabled ?? true,
+            BooksEnabled = config?.BooksEnabled ?? false,
             DefaultSettings = config?.DefaultUserSettings
         });
     }
@@ -1755,6 +1756,14 @@ public class MoonfinPingResponse
     /// </summary>
     [JsonPropertyName("recommendationsSupported")]
     public bool? RecommendationsSupported { get; set; }
+
+    /// <summary>
+    /// True when the Books (Shelfmark) integration is enabled. Older plugins leave it out,
+    /// so clients read a missing value as false and hide the Books entry, matching how
+    /// MessagesSupported gates the messages UI.
+    /// </summary>
+    [JsonPropertyName("booksEnabled")]
+    public bool? BooksEnabled { get; set; }
 
     [JsonPropertyName("defaultSettings")]
     public MoonfinSettingsProfile? DefaultSettings { get; set; }

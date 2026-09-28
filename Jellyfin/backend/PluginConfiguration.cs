@@ -379,6 +379,50 @@ public class PluginConfiguration : BasePluginConfiguration
     public string GamesLaunchBoxUrl { get; set; } =
         "https://gamesdb.launchbox-app.com/Metadata.zip";
 
+    // ---------------------------------------------------------------------
+    // Books (Shelfmark) configuration
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Enables the Books (Shelfmark) feature for all Moonfin clients.
+    /// </summary>
+    public bool BooksEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Internal Shelfmark URL for server-to-server calls from Jellyfin. This must stay a
+    /// private network address (default http://shelfmark:8084), never the public
+    /// Shelfmark frontend domain. The plugin authenticates each call itself with
+    /// Remote-User/Remote-Groups; no cookies or client headers are forwarded.
+    /// Example: http://shelfmark:8084
+    /// </summary>
+    public string? BooksShelfmarkUrl { get; set; }
+
+    /// <summary>
+    /// Gets the normalized internal Shelfmark base URL, without a trailing slash. Uses
+    /// the private container address when unset; returns null for an invalid URL.
+    /// </summary>
+    public string? GetEffectiveShelfmarkUrl()
+    {
+        var trimmed = (BooksShelfmarkUrl ?? "http://shelfmark:8084").Trim();
+        if (string.IsNullOrEmpty(trimmed))
+        {
+            return null;
+        }
+
+        if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri)
+            || uri.Scheme is not ("http" or "https")
+            || string.IsNullOrEmpty(uri.Host)
+            || !string.IsNullOrEmpty(uri.UserInfo)
+            || !string.IsNullOrEmpty(uri.Query)
+            || !string.IsNullOrEmpty(uri.Fragment)
+            || uri.AbsolutePath != "/")
+        {
+            return null;
+        }
+
+        return uri.ToString().TrimEnd('/');
+    }
+
     /// <summary>
     /// Gets the effective Seerr URL for server-to-server communication.
     /// </summary>

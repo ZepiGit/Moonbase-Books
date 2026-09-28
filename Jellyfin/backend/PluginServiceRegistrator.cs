@@ -1,5 +1,7 @@
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
+using MediaBrowser.Common.Configuration;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Moonfin.Server.Services;
 
@@ -61,6 +63,26 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<LaunchBoxService>();
         serviceCollection.AddSingleton<UserBookmarksService>();
         serviceCollection.AddHttpClient();
+        serviceCollection.AddSingleton<ShelfmarkProxyService>();
+        serviceCollection.AddSingleton<BooksReleaseJobs>();
+        serviceCollection.AddSingleton(provider => new BooksReleaseHandles(DataProtectionProvider.Create(
+            new DirectoryInfo(Path.Combine(provider.GetRequiredService<IApplicationPaths>()
+                .PluginConfigurationsPath, "Moonfin", "books-keys")),
+            builder => builder.SetApplicationName("Moonfin.Books"))));
+
+        serviceCollection.AddHttpClient("MoonfinBooksShelfmark", client =>
+        {
+            client.Timeout = ShelfmarkProxyService.ShortRequestTimeout;
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Moonfin-Books-Proxy");
+        }).ConfigurePrimaryHttpMessageHandler(ShelfmarkProxyService.CreateHttpHandler)
+          .RemoveAllLoggers();
+        serviceCollection.AddHttpClient("MoonfinBooksShelfmarkReleases", client =>
+        {
+            // One Prowlarr round can take 180 seconds; auto-expand may need a second round.
+            client.Timeout = ShelfmarkProxyService.ReleaseSearchTimeout;
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Moonfin-Books-Proxy");
+        }).ConfigurePrimaryHttpMessageHandler(ShelfmarkProxyService.CreateHttpHandler)
+          .RemoveAllLoggers();
 
         // The custom row scrapes need a browser user agent to get a normal page back, and a
         // short timeout so one unresponsive host can't stall the whole sync.

@@ -528,6 +528,29 @@
                                 that proxy forwards <code>/Moonfin/</code> requests to Jellyfin.
                             </div>
                         </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input type="checkbox" id="BooksEnabled" is="emby-checkbox" />
+                                <span>Enable Books (Shelfmark)</span>
+                            </label>
+                            <div class="fieldDescription">
+                                Enable the Books integration for all users. Moonfin forwards whitelisted search,
+                                release and download calls from the app to your Shelfmark server. Users authenticate
+                                with their normal Jellyfin sign-in; no separate Shelfmark login is needed.
+                            </div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="BooksShelfmarkUrl">Shelfmark URL</label>
+                            <input type="url" id="BooksShelfmarkUrl" is="emby-input" placeholder="http://shelfmark:8084" />
+                            <div class="fieldDescription">
+                                <strong>Where the Jellyfin server can reach Shelfmark internally.</strong>
+                                Start the address with <code>http://</code> or <code>https://</code> and use a private
+                                network or Docker address, for example <code>http://shelfmark:8084</code> when both
+                                containers share a Docker network. Do not enter the public <code>books.</code> domain:
+                                Moonfin calls Shelfmark directly and signs each request with the calling user's
+                                Jellyfin identity, so the public proxy login is not involved.
+                            </div>
+                        </div>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="SeerrDisplayName">Display Name (Optional)</label>
                             <input type="text" id="SeerrDisplayName" is="emby-input" placeholder="Auto-detected" />
@@ -6059,6 +6082,8 @@
                     document.querySelector('#WebDefaultServerUrl').value = config.WebDefaultServerUrl || '';
                     document.querySelector('#WebForcedServerUrl').value = config.WebForcedServerUrl || '';
                     document.querySelector('#WebEnableWebRtcScan').checked = config.WebEnableWebRtcScan !== false;
+                    document.querySelector('#BooksEnabled').checked = config.BooksEnabled === true;
+                    document.querySelector('#BooksShelfmarkUrl').value = config.BooksShelfmarkUrl || '';
 
                     document.querySelector('#GamesEnabled').checked = config.GamesEnabled === true;
                     document.querySelector('#GamesIsolateWebApp').checked = config.GamesIsolateWebApp === true;
@@ -6836,6 +6861,8 @@
                         config.WebDefaultServerUrl = document.querySelector('#WebDefaultServerUrl').value || null;
                         config.WebForcedServerUrl = document.querySelector('#WebForcedServerUrl').value || null;
                         config.WebEnableWebRtcScan = document.querySelector('#WebEnableWebRtcScan').checked;
+                        config.BooksEnabled = document.querySelector('#BooksEnabled').checked;
+                        config.BooksShelfmarkUrl = document.querySelector('#BooksShelfmarkUrl').value || null;
 
                         config.GamesEnabled = document.querySelector('#GamesEnabled').checked;
                         config.GamesIsolateWebApp = document.querySelector('#GamesIsolateWebApp').checked;

@@ -1,0 +1,59 @@
+name: Moonbase Books plugin
+on:
+  push:
+    branches: [master]
+    paths: ['Jellyfin/backend/**', 'Jellyfin/build.sh', 'scripts/**', '.github/workflows/books-plugin.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moonbase-books-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  FLUTTER_VERSION: '3.47.2'
+  BOOKS_VERSION: '2.3.1.0'
+  APPS_SOURCE_REF: 'f22d305159be9160a9a9a484a2d2e13714539853'
+jobs:
+  jellyfin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Books backend checks
+        run: dotnet run --project Jellyfin/backend/BooksProxy.SmokeTests -c Release
+      - uses: actions/checkout@v4
+        with:
+          repository: ZepiGit/Moonfin-Books
+          ref: ${{ env.APPS_SOURCE_REF }}
+          path: apps
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Build pinned Books web client
+        working-directory: apps
+        run: flutter build web --release --no-wasm-dry-run --base-href /Moonfin/Web/ --dart-define=MOONFIN_CUSTOM_BUILD=true
+      - name: Prepare Books web bundle
+        run: |
+          mkdir -p Jellyfin/frontend
+          rsync -a --delete apps/build/web/ Jellyfin/frontend/
+          rsync -a apps/web/theme/ Jellyfin/frontend/theme/
+          python3 apps/scripts/brand-books-web.py Jellyfin/frontend
+      - name: Build and verify plugin
+        run: bash Jellyfin/build.sh "$BOOKS_VERSION" 12.0.0
+      - name: Package Moonbase Books
+        run: python3 scripts/package-books.py "$BOOKS_VERSION"
+      - name: Record source revisions
+        run: |
+          printf 'Plugin: %s\nApps: %s\n' "$GITHUB_SHA" "$APPS_SOURCE_REF" > dist/SOURCE_REVISIONS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moonbase-books-jellyfin
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
