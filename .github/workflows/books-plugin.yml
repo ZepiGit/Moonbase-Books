@@ -13,7 +13,7 @@ env:
   FLUTTER_VERSION: '3.47.2'
   BOOKS_VERSION: '2.3.1.100'
   SKIP_MANIFEST_UPDATE: '1'
-  APPS_SOURCE_REF: 'f357aef2db69f8e28ca946794fc973fb8c626943'
+  APPS_SOURCE_REF: 'feb9f17c1b8764b6fa42ced0b1a706a4207e7d4f'
 jobs:
   jellyfin:
     runs-on: ubuntu-latest
