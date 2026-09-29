@@ -49,4 +49,4 @@ The Linux screenshot shows Books search in the released x64 tar package, running
 | --- | --- |
 | ![Books search in the native Linux release](docs/screenshots/books-search-linux-native.png) | <img src="docs/screenshots/android-first-launch.png" alt="Moonfin Books Android APK at server selection" width="240"> |
 
-Matching app downloads are available in [Moonfin Books Preview 2](https://github.com/ZepiGit/Moonfin-Books/releases/tag/v2.6.0-books.2). Follow the [client installation steps](https://github.com/ZepiGit/Moonfin-Books/blob/main/docs/INSTALL.md); iOS/tvOS IPAs require Apple signing and provisioning.
+Matching app downloads are available in [Moonfin Books Preview 3](https://github.com/ZepiGit/Moonfin-Books/releases/tag/v2.6.0-books.3). Follow the [client installation steps](https://github.com/ZepiGit/Moonfin-Books/blob/main/docs/INSTALL.md); iOS/tvOS IPAs require Apple signing and provisioning.
