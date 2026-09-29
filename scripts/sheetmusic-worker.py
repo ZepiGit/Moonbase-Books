@@ -64,8 +64,12 @@ class _SafeRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def _write_job(path: Path, job: dict) -> None:
+    previous = path.stat()
     descriptor, name = tempfile.mkstemp(prefix=".score-status-", dir=path.parent)
     try:
+        os.fchmod(descriptor, previous.st_mode & 0o777)
+        if os.geteuid() == 0:
+            os.fchown(descriptor, previous.st_uid, previous.st_gid)
         with os.fdopen(descriptor, "w") as stream:
             json.dump(job, stream, ensure_ascii=False)
             stream.write("\n")

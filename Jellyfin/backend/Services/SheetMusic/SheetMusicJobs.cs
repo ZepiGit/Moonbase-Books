@@ -37,6 +37,7 @@ public sealed class SheetMusicJobs
         }
         catch (IOException) { return null; }
         catch (JsonException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
     }
 
     public SheetMusicJob? Enqueue(string owner, SheetMusicPiece piece)
@@ -48,7 +49,8 @@ public sealed class SheetMusicJobs
                 .Select(path =>
                 {
                     try { return JsonSerializer.Deserialize<SheetMusicJob>(File.ReadAllText(path), Json); }
-                    catch (Exception ex) when (ex is IOException or JsonException) { return null; }
+                    catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
+                    { return null; }
                 })
                 .Where(job => job != null)
                 .ToArray();

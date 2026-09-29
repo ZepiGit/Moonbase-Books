@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -38,6 +39,7 @@ class SheetMusicWorkerTests(unittest.TestCase):
         }
         self.path = self.queue / (self.job["id"] + ".json")
         self.path.write_text(json.dumps(self.job))
+        self.path.chmod(0o640)
 
     def tearDown(self):
         worker.CONFIG, worker.QUEUE, worker.BOOKS, worker.SPOOL = self.old
@@ -58,6 +60,7 @@ class SheetMusicWorkerTests(unittest.TestCase):
             worker._process(self.path)
             importing = json.loads(self.path.read_text())
             self.assertEqual(importing["status"], "importing")
+            self.assertEqual(self.path.stat().st_mode & 0o777, 0o640)
             self.assertTrue(importing["filePath"].startswith("/media/sheetmusic/"))
             scan.assert_called_once()
             self.assertEqual(len(list(self.books.rglob("*.pdf"))), 1)
