@@ -1,0 +1,5 @@
+Moonbase Books 2.3.1.102 Preview 3 is a small update to the verified Preview 2 plugin. Broad score searches now reserve result space for both the pinned Mutopia catalog and Internet Archive, so common terms cannot be monopolized by one source. The new source-balance regression test passes.
+
+It keeps the authenticated ebook/audiobook proxy and the automatic sheet-music request, import, in-app item and owner-only download paths from 2.3.1.101. The matching native Moonfin Books client is [Preview 2](https://github.com/ZepiGit/Moonfin-Books/releases/tag/v2.6.0-books.2); no app rebuild is needed for this server-side search fix.
+
+This is a personal adaptation of the official Moonbase plugin, shared for others with the same use case. It is not an official upstream release. Verify the ZIP with `SHA256SUMS` and check the pinned app/plugin revisions in `SOURCE_REVISIONS.txt` before deployment. The host importer currently supports validated PDF scores; other score formats need a tested viewer or renderer.
