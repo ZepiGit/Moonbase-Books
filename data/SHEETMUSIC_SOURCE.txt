@@ -1,0 +1,4 @@
+Source: MutopiaProject/MutopiaProject
+Commit: 2144afd6f52d56c5b6995b8b589ef1268b3139f0
+Catalog generator: Moonfin-Books/scripts/sheetmusic/build_sheetmusic_catalog.py
+Validation: HTTPS HEAD returned 200 with PDF content type for all 1070 retained entries on 2026-09-29; 234 of 1304 candidates were excluded.

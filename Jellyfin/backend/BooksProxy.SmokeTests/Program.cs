@@ -31,9 +31,26 @@ static class Program
 
         Check(service.BuildUpstreamPath("search", new Dictionary<string, string?> { ["query"] = "Dune & Sea" })
             == "/api/metadata/search?query=Dune%20%26%20Sea", "metadata query is encoded");
+        Check(service.BuildUpstreamPath("search", new Dictionary<string, string?>
+            { ["title"] = "Project Hail Mary", ["author"] = "Andy Weir" })
+            == "/api/metadata/search?author=Andy%20Weir&title=Project%20Hail%20Mary",
+            "metadata title and author fields are encoded without an extra general query");
         Check(service.BuildUpstreamPath("releases", new Dictionary<string, string?>
             { ["provider"] = "openlibrary", ["book_id"] = "42" })
             == "/api/releases?book_id=42&provider=openlibrary&source=prowlarr", "Prowlarr is selected");
+        foreach (var provider in new[] { "googlebooks", "hardcover" })
+        {
+            Check(service.BuildUpstreamPath("releases", new Dictionary<string, string?>
+                { ["provider"] = provider, ["book_id"] = "42" })
+                == $"/api/releases?book_id=42&provider={provider}&source=prowlarr",
+                $"{provider} metadata can reach Prowlarr releases");
+        }
+        Check(service.BuildUpstreamPath("releases", new Dictionary<string, string?>
+            { ["provider"] = "googlebooks", ["book_id"] = "../settings" }) is null,
+            "Google Books volume ID cannot escape its upstream path");
+        Check(service.BuildUpstreamPath("releases", new Dictionary<string, string?>
+            { ["provider"] = "hardcover", ["book_id"] = "123abc" }) is null,
+            "Hardcover book ID must be numeric");
         Check(service.BuildUpstreamPath("releases", new Dictionary<string, string?>
             { ["source"] = "direct_download" }) is null, "disabled source is rejected");
         Check(service.BuildUpstreamPath("releases", new Dictionary<string, string?>
@@ -167,6 +184,54 @@ static class Program
             "active IDs match projected status and stay private");
 
         var controller = new BooksProxyController(service, handles, jobs);
+        var catalogPath = Path.Combine(Path.GetTempPath(), $"moonfin-sheetmusic-{Guid.NewGuid():N}.json");
+        var scoreQueue = Path.Combine(Path.GetTempPath(), $"moonfin-score-queue-{Guid.NewGuid():N}");
+        try
+        {
+            File.WriteAllText(catalogPath, """
+                [{"id":"BachJS/BWV999","title":"Prelude in D Minor","composer":"BachJS",
+                  "instrument":"Lute, Guitar","license":"Public Domain",
+                  "source_url":"https://www.mutopiaproject.org/ftp/BachJS/BWV999/score.ly",
+                  "pdf_url":"https://www.mutopiaproject.org/ftp/BachJS/BWV999/score-a4.pdf"}]
+                """);
+            var catalog = new SheetMusicCatalogService(catalogPath,
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<SheetMusicCatalogService>.Instance);
+            var sheetController = new SheetMusicController(catalog,
+                new InternetArchiveScoreService(client), new SheetMusicJobs(scoreQueue));
+            sheetController.ControllerContext.HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [new Claim("Jellyfin-UserId", Guid.NewGuid().ToString())], "API-key")),
+            };
+            var sheet = (OkObjectResult)await sheetController.Search(null, null, null);
+            var sheetJson = JsonSerializer.Serialize(sheet.Value);
+            Check(sheetJson.Contains("\"license\":\"Public Domain\"")
+                && sheetJson.Contains("\"pdf_url\":\"https://www.mutopiaproject.org/ftp/")
+                && sheetJson.Contains("\"count\":1") && sheetJson.Contains("\"truncated\":false"),
+                "sheet music endpoint returns licensed metadata in the client wire format");
+            handler.NextResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{\"response\":{\"docs\":[]}}", Encoding.UTF8, "application/json"),
+            };
+            Check(JsonSerializer.Serialize(((OkObjectResult)await sheetController.Search("absent", null, null)).Value)
+                .Contains("\"count\":0"), "sheet music search filters by title");
+            var requested = (AcceptedResult)await sheetController.RequestScore(
+                new SheetMusicController.RequestBody("mutopia:BachJS/BWV999"));
+            var requestJson = JsonSerializer.Serialize(requested.Value);
+            var jobId = JsonDocument.Parse(requestJson).RootElement.GetProperty("job_id").GetString()!;
+            Check(jobId.Length == 32 && sheetController.GetStatus(jobId) is OkObjectResult,
+                "score request is queued and visible to its owner");
+            sheetController.ControllerContext.HttpContext = new DefaultHttpContext();
+            Check(await sheetController.Search(null, null, null) is UnauthorizedObjectResult,
+                "sheet music endpoint requires a Jellyfin user claim");
+            Check(sheetController.GetStatus(jobId) is UnauthorizedObjectResult,
+                "score status requires Jellyfin identity");
+        }
+        finally
+        {
+            File.Delete(catalogPath);
+            if (Directory.Exists(scoreQueue)) Directory.Delete(scoreQueue, recursive: true);
+        }
         var pending = (ObjectResult)typeof(BooksProxyController)
             .GetMethod("Pending", BindingFlags.Instance | BindingFlags.NonPublic)!
             .Invoke(controller, ["opaque-job"])!;

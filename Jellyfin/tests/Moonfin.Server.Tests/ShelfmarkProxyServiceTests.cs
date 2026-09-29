@@ -26,6 +26,12 @@ public sealed class ShelfmarkProxyServiceTests
         Assert.Equal("/api/status", service.BuildUpstreamPath("status", new Dictionary<string, string?>()));
         Assert.Equal("/api/metadata/search?query=tolkien",
             service.BuildUpstreamPath("search", new Dictionary<string, string?> { ["query"] = "tolkien" }));
+        Assert.Equal("/api/metadata/search?author=Andy%20Weir&title=Project%20Hail%20Mary",
+            service.BuildUpstreamPath("search", new Dictionary<string, string?>
+            {
+                ["title"] = "Project Hail Mary",
+                ["author"] = "Andy Weir",
+            }));
         Assert.Equal("/api/releases?book_id=42&provider=openlibrary&source=prowlarr",
             service.BuildUpstreamPath("releases", new Dictionary<string, string?>
             {
@@ -33,6 +39,15 @@ public sealed class ShelfmarkProxyServiceTests
                 ["book_id"] = "42",
             }));
         Assert.Equal("/api/downloads/active", service.BuildUpstreamPath("active", new Dictionary<string, string?>()));
+        foreach (var provider in new[] { "googlebooks", "hardcover" })
+        {
+            Assert.Equal($"/api/releases?book_id=42&provider={provider}&source=prowlarr",
+                service.BuildUpstreamPath("releases", new Dictionary<string, string?>
+                {
+                    ["provider"] = provider,
+                    ["book_id"] = "42",
+                }));
+        }
     }
 
     [Theory]
@@ -41,11 +56,15 @@ public sealed class ShelfmarkProxyServiceTests
     [InlineData("search", "query=ok&%23fragment=1")]
     [InlineData("search", "query=ok&source=/api/config")]
     [InlineData("search", "query=")]
+    [InlineData("search", "title=&author=")]
     [InlineData("releases", "indexers=Other")]
     [InlineData("releases", "indexers=")]
     [InlineData("releases", "expand_search=true")]
     [InlineData("releases", "expand_search=")]
     [InlineData("releases", "source=direct_download")]
+    [InlineData("releases", "provider=unknown")]
+    [InlineData("releases", "provider=googlebooks&book_id=../settings")]
+    [InlineData("releases", "provider=hardcover&book_id=123abc")]
     [InlineData("releases", "unknown=x")]
     public void BuildUpstreamPath_RejectsEverythingThatCouldLeaveTheWhitelist(string operation, string rawQuery)
     {

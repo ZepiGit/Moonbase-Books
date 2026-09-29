@@ -1,0 +1,11 @@
+[Unit]
+Description=Poll queued Moonfin Books sheet music requests
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=20s
+AccuracySec=5s
+Unit=sheetmusic-import.service
+
+[Install]
+WantedBy=timers.target

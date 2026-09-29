@@ -36,7 +36,7 @@ public sealed class ShelfmarkProxyService
     private const int MaxShortParamLength = 400;
     private static readonly HashSet<string> SearchParams = new(StringComparer.Ordinal)
     {
-        "query", "content_type", "provider", "limit", "page", "sort",
+        "query", "title", "author", "content_type", "provider", "limit", "page", "sort",
     };
     private static readonly HashSet<string> ReleaseParams = new(StringComparer.Ordinal)
     {
@@ -98,9 +98,21 @@ public sealed class ShelfmarkProxyService
         }
 
         if (operation == "releases" && query.TryGetValue("provider", out var releaseProvider)
-            && releaseProvider is not ("openlibrary" or "manual" or "prowlarr"))
+            && releaseProvider is not ("openlibrary" or "googlebooks" or "hardcover" or "manual" or "prowlarr"))
         {
             return null;
+        }
+
+        if (operation == "releases" && query.TryGetValue("provider", out releaseProvider)
+            && releaseProvider is "googlebooks" or "hardcover")
+        {
+            if (!query.TryGetValue("book_id", out var bookId) || bookId is not { Length: > 0 and <= 64 }
+                || (releaseProvider == "googlebooks"
+                    ? !bookId.All(c => char.IsAsciiLetterOrDigit(c) || c is '_' or '-')
+                    : bookId.Length > 10 || !bookId.All(char.IsAsciiDigit)))
+            {
+                return null;
+            }
         }
 
         var encoded = new List<string>();
@@ -137,7 +149,8 @@ public sealed class ShelfmarkProxyService
         }
 
         if (operation == "search"
-            && (!query.TryGetValue("query", out var searchTerm) || string.IsNullOrWhiteSpace(searchTerm)))
+            && !new[] { "query", "title", "author" }.Any(key =>
+                query.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)))
         {
             return null;
         }

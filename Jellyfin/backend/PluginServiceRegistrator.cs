@@ -3,6 +3,7 @@ using MediaBrowser.Controller.Plugins;
 using MediaBrowser.Common.Configuration;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moonfin.Server.Services;
 
 namespace Moonfin.Server;
@@ -64,6 +65,16 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<UserBookmarksService>();
         serviceCollection.AddHttpClient();
         serviceCollection.AddSingleton<ShelfmarkProxyService>();
+        serviceCollection.AddSingleton(provider => new SheetMusicCatalogService(
+            Path.Combine(MoonfinPlugin.ResolveDataFolderPath(), "sheetmusic-catalog.json"),
+            provider.GetRequiredService<ILogger<SheetMusicCatalogService>>()));
+        serviceCollection.AddSingleton(_ => new SheetMusicJobs(
+            Path.Combine(MoonfinPlugin.ResolveDataFolderPath(), "sheetmusic-queue")));
+        serviceCollection.AddHttpClient<InternetArchiveScoreService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(15);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Moonfin-Books-Scores/1.0");
+        });
         serviceCollection.AddSingleton<BooksReleaseJobs>();
         serviceCollection.AddSingleton(provider => new BooksReleaseHandles(DataProtectionProvider.Create(
             new DirectoryInfo(Path.Combine(provider.GetRequiredService<IApplicationPaths>()

@@ -10,7 +10,11 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Compile Include="../Services/ShelfmarkProxyService.cs" Link="ShelfmarkProxyService.cs" />
     <Compile Include="../Services/BooksReleaseState.cs" Link="BooksReleaseState.cs" />
+    <Compile Include="../Services/SheetMusic/SheetMusicCatalogService.cs" Link="SheetMusicCatalogService.cs" />
+    <Compile Include="../Services/SheetMusic/SheetMusicJobs.cs" Link="SheetMusicJobs.cs" />
+    <Compile Include="../Services/SheetMusic/InternetArchiveScoreService.cs" Link="InternetArchiveScoreService.cs" />
     <Compile Include="../Api/BooksProxyController.cs" Link="BooksProxyController.cs" />
+    <Compile Include="../Api/SheetMusic/SheetMusicController.cs" Link="SheetMusicController.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>

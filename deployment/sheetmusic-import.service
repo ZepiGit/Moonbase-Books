@@ -1,0 +1,11 @@
+[Unit]
+Description=Import queued Moonfin Books sheet music
+After=docker.service rclone-gdrive.service
+RequiresMountsFor=/mnt/gdrive/media/sheetmusic
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/media-stack/books-hooks/sheetmusic-worker.py
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=8min
