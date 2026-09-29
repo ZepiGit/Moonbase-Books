@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 env:
   FLUTTER_VERSION: '3.47.2'
-  BOOKS_VERSION: '2.3.1.101'
+  BOOKS_VERSION: '2.3.1.102'
   SKIP_MANIFEST_UPDATE: '1'
   APPS_SOURCE_REF: '735d6ce24244c5cbc771e349bdff259874615025'
 jobs:

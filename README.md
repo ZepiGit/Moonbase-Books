@@ -2,7 +2,7 @@
 
 This repository is my personal adaptation of the official Moonbase plugin for my own setup. It is not an official upstream release. Anyone who wants the same features is welcome to use this fork under its existing license.
 
-Moonbase Books is a fork of [Moonfin-Client/Plugin](https://github.com/Moonfin-Client/Plugin). Its Jellyfin plugin adds an authenticated Books bridge and serves the matching [Moonfin Books](https://github.com/ZepiGit/Moonfin-Books) web app. Users search for ebooks or audiobooks, choose a release, queue a download, and view their own status from the existing Jellyfin session. Preview 2 also searches sheet music across a pinned Mutopia catalog and the Internet Archive IMSLP collection, then imports a requested PDF into a dedicated Jellyfin library.
+Moonbase Books is a fork of [Moonfin-Client/Plugin](https://github.com/Moonfin-Client/Plugin). Its Jellyfin plugin adds an authenticated Books bridge and serves the matching [Moonfin Books](https://github.com/ZepiGit/Moonfin-Books) web app. Users search for ebooks or audiobooks, choose a release, queue a download, and view their own status from the existing Jellyfin session. Preview 2 also searches sheet music across a pinned Mutopia catalog and the Internet Archive IMSLP collection, then imports a requested PDF into a dedicated Jellyfin library. Plugin Preview 3 keeps both sources represented even for broad search terms.
 
 ```mermaid
 flowchart LR
@@ -23,7 +23,7 @@ The previous Moonbase Books `2.3.1.100` passed 135 backend smoke checks, 14 Shel
 
 Install the Jellyfin artifact from this fork as a **replacement** for official Moonbase. It retains the upstream Jellyfin assembly name and plugin GUID, so the two plugins cannot coexist. Back up the plugin files, configuration, and Books keyring; remove the official Moonbase repository entry from Jellyfin before replacement. `autoUpdate: false` in the fork package is not enough to prevent the old catalog from offering an upstream replacement. No Moonbase Books updater catalog is published currently; install future updates deliberately after checking compatibility.
 
-The web app is served by the plugin at `https://jellyfin.example.org/Moonfin/Web/` and includes Books. Official native Moonfin apps continue using their normal Moonbase features on this server, but do not gain the Books tab through a plugin update. Install a [Moonfin Books native fork package](https://github.com/ZepiGit/Moonfin-Books/blob/main/docs/INSTALL.md) for that tab; the fork's app-local data is separate from official Moonfin. [Download Preview 2](https://github.com/ZepiGit/Moonbase-Books/releases/tag/v2.3.1.101-books.2) for the verified ZIP, checksums and exact source revisions. Start with the [step-by-step server setup guide](docs/SERVER_SETUP.md).
+The web app is served by the plugin at `https://jellyfin.example.org/Moonfin/Web/` and includes Books. Official native Moonfin apps continue using their normal Moonbase features on this server, but do not gain the Books tab through a plugin update. Install a [Moonfin Books native fork package](https://github.com/ZepiGit/Moonfin-Books/blob/main/docs/INSTALL.md) for that tab; the fork's app-local data is separate from official Moonfin. [Download Plugin Preview 3](https://github.com/ZepiGit/Moonbase-Books/releases/tag/v2.3.1.102-books.3) for the verified ZIP, checksums and exact source revisions. Start with the [step-by-step server setup guide](docs/SERVER_SETUP.md).
 
 ## Web screenshots
 

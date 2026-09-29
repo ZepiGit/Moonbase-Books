@@ -46,9 +46,25 @@ public sealed class SheetMusicController : ControllerBase
             return BadRequest(new { error = "Invalid sheet music search parameters" });
         }
 
+        IReadOnlyList<SheetMusicPiece> archive = [];
+        var archiveFailed = false;
+        if (!string.IsNullOrWhiteSpace(query) || !string.IsNullOrWhiteSpace(composer))
+        {
+            try
+            {
+                archive = await _archive.SearchAsync(query, composer, HttpContext.RequestAborted)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+            {
+                archiveFailed = true;
+            }
+        }
+
         var pieces = _catalog.Pieces;
         var results = new List<object>();
-        var truncated = false;
+        var truncated = archive.Count == 40;
+        var mutopiaLimit = MaxResults - archive.Count;
         foreach (var piece in pieces)
         {
             if (!Matches(piece.Title, query) ||
@@ -61,7 +77,7 @@ public sealed class SheetMusicController : ControllerBase
             // Snake-case keys match the client contract in
             // sheet_music_repository.dart exactly (the Books proxy endpoints use
             // the same wire style).
-            if (results.Count == MaxResults)
+            if (results.Count == mutopiaLimit)
             {
                 truncated = true;
                 break;
@@ -82,34 +98,24 @@ public sealed class SheetMusicController : ControllerBase
             });
         }
 
-        if (results.Count < MaxResults && (!string.IsNullOrWhiteSpace(query)
-            || !string.IsNullOrWhiteSpace(composer)))
+        foreach (var piece in archive)
         {
-            try
+            if (results.Count == MaxResults) { truncated = true; break; }
+            results.Add(new Dictionary<string, object?>(StringComparer.Ordinal)
             {
-                var archive = await _archive.SearchAsync(query, composer, HttpContext.RequestAborted)
-                    .ConfigureAwait(false);
-                foreach (var piece in archive)
-                {
-                    if (results.Count == MaxResults) { truncated = true; break; }
-                    results.Add(new Dictionary<string, object?>(StringComparer.Ordinal)
-                    {
-                        ["id"] = piece.Id,
-                        ["source"] = "internet_archive",
-                        ["title"] = piece.Title,
-                        ["composer"] = piece.Composer,
-                        ["instrument"] = piece.Instrument,
-                        ["license"] = piece.License,
-                        ["source_url"] = piece.SourceUrl,
-                        ["pdf_url"] = piece.PdfUrl,
-                    });
-                }
-            }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
-            {
-                if (results.Count == 0) return StatusCode(502, new { error = "Score catalog search failed" });
-            }
+                ["id"] = piece.Id,
+                ["source"] = "internet_archive",
+                ["title"] = piece.Title,
+                ["composer"] = piece.Composer,
+                ["instrument"] = piece.Instrument,
+                ["license"] = piece.License,
+                ["source_url"] = piece.SourceUrl,
+                ["pdf_url"] = piece.PdfUrl,
+            });
         }
+
+        if (archiveFailed && results.Count == 0)
+            return StatusCode(502, new { error = "Score catalog search failed" });
 
         return Ok(new { pieces = results, count = results.Count, truncated });
     }
