@@ -27,7 +27,7 @@ jobs:
           SOURCE_SHA: ${{ inputs.source_sha }}
         run: |
           set -euo pipefail
-          test "$SOURCE_SHA" = 'b3df72713b7e9acd3c864d5cea0c2fbe72c2cf8a'
+          test "$SOURCE_SHA" = '88753a4d51bf0d3b9944a58b7cc5ceede722d7d8'
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" > /tmp/run.json
           python3 - <<'PY'
           import json, os
@@ -49,7 +49,7 @@ jobs:
           python3 - <<'PY'
           import json, zipfile
           source = open('SOURCE_REVISIONS.txt').read()
-          assert 'Plugin: b3df72713b7e9acd3c864d5cea0c2fbe72c2cf8a' in source
+          assert 'Plugin: 88753a4d51bf0d3b9944a58b7cc5ceede722d7d8' in source
           assert 'Apps: 735d6ce24244c5cbc771e349bdff259874615025' in source
           with zipfile.ZipFile('Moonbase_Books_Jellyfin_v2.3.1.101.zip') as archive:
               meta = json.loads(archive.read('meta.json'))
