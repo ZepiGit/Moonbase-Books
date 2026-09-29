@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
+import datetime
 import os
 import re
 import socket
@@ -26,6 +27,7 @@ CONFIG = Path(os.environ.get("SHEETMUSIC_CONFIG", "/opt/media-stack/config/jelly
 BOOKS = Path(os.environ.get("SHEETMUSIC_LIBRARY", "/mnt/gdrive/media/sheetmusic"))
 SPOOL = Path(os.environ.get("SHEETMUSIC_SPOOL", "/srv/media-stack/downloads/sheetmusic-spool"))
 MAX_BYTES = 100_000_000
+MAX_JOB_AGE = datetime.timedelta(minutes=45)
 QUEUE = CONFIG / "sheetmusic-queue"
 ET.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
 ET.register_namespace("", "http://www.idpf.org/2007/opf")
@@ -195,6 +197,17 @@ with urllib.request.urlopen(req,timeout=25) as response:
 
 def _process(path: Path) -> None:
     job = json.loads(path.read_text())
+    try:
+        created = datetime.datetime.fromisoformat(job.get("createdAt", "").replace("Z", "+00:00"))
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=datetime.timezone.utc)
+    except (TypeError, ValueError):
+        created = datetime.datetime.fromtimestamp(path.stat().st_mtime, datetime.timezone.utc)
+    if job.get("status") in ("queued", "fetching", "importing") and \
+            datetime.datetime.now(datetime.timezone.utc) - created > MAX_JOB_AGE:
+        job.update(status="error", error="ImportTimeout")
+        _write_job(path, job)
+        return
     if job.get("status") == "importing" and job.get("filePath"):
         item = _find_item(job["filePath"], job["title"])
         if item:
@@ -220,14 +233,17 @@ def _process(path: Path) -> None:
             if hashlib.sha256(destination.read_bytes()).hexdigest() != digest:
                 raise ValueError("existing score has different content")
         else:
-            with pdf.open("rb") as source_file, partial.open("wb") as target_file:
-                while chunk := source_file.read(1024 * 1024):
-                    target_file.write(chunk)
-                target_file.flush()
-                os.fsync(target_file.fileno())
-            if hashlib.sha256(partial.read_bytes()).hexdigest() != digest:
-                raise ValueError("copied score failed hash check")
-            os.replace(partial, destination)
+            try:
+                with pdf.open("rb") as source_file, partial.open("wb") as target_file:
+                    while chunk := source_file.read(1024 * 1024):
+                        target_file.write(chunk)
+                    target_file.flush()
+                    os.fsync(target_file.fileno())
+                if hashlib.sha256(partial.read_bytes()).hexdigest() != digest:
+                    raise ValueError("copied score failed hash check")
+                os.replace(partial, destination)
+            finally:
+                partial.unlink(missing_ok=True)
         opf = folder / "metadata.opf"
         if not opf.exists():
             opf.write_bytes(_opf(job, digest))

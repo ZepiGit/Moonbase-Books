@@ -14,7 +14,8 @@ public sealed record SheetMusicJob(
     string Status,
     string? Error = null,
     string? FilePath = null,
-    string? ItemId = null);
+    string? ItemId = null,
+    DateTimeOffset? CreatedAt = null);
 
 /// <summary>Small durable queue shared with the host-side score importer.</summary>
 public sealed class SheetMusicJobs
@@ -55,13 +56,16 @@ public sealed class SheetMusicJobs
                 .Where(job => job != null)
                 .ToArray();
             var existing = jobs.FirstOrDefault(job => job!.UserId == owner && job.PieceId == piece.Id
-                && job.Status is "queued" or "fetching" or "importing" or "ready");
+                && (job.Status is "queued" or "fetching" or "importing" or "ready"));
             if (existing != null) return existing;
             if (jobs.Count(job => job!.Status is "queued" or "fetching" or "importing") >= 4) return null;
+            if (jobs.Count(job => job!.UserId == owner
+                && (job.Status is "queued" or "fetching" or "importing")) >= 2) return null;
 
             var id = Guid.NewGuid().ToString("N");
             var job = new SheetMusicJob(id, owner, piece.Id, piece.Title, piece.Composer,
-                piece.License, piece.SourceUrl, piece.PdfUrl, "queued");
+                piece.License, piece.SourceUrl, piece.PdfUrl, "queued",
+                CreatedAt: DateTimeOffset.UtcNow);
             var path = Path.Combine(_directory, id + ".json");
             var temporary = Path.Combine(_directory, "." + id + ".tmp");
             File.WriteAllText(temporary, JsonSerializer.Serialize(job, Json));

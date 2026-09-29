@@ -88,6 +88,15 @@ class SheetMusicWorkerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "do not match"):
                 worker._process(self.path)
 
+    def test_stale_import_releases_the_queue_slot(self):
+        self.job.update(status="importing", filePath="/media/sheetmusic/stale/score.pdf",
+            createdAt="2020-01-01T00:00:00+00:00")
+        self.path.write_text(json.dumps(self.job))
+        worker._process(self.path)
+        result = json.loads(self.path.read_text())
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["error"], "ImportTimeout")
+
 
 if __name__ == "__main__":
     unittest.main()

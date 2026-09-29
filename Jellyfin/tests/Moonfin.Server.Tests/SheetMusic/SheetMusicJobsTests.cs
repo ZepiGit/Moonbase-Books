@@ -29,4 +29,18 @@ public sealed class SheetMusicJobsTests : IDisposable
         Assert.Null(jobs.Find("someone-else", created.Id));
         Assert.Null(jobs.Find("owner", "../config"));
     }
+
+    [Fact]
+    public void Enqueue_LimitsOneUserWithoutBlockingAnother()
+    {
+        var jobs = new SheetMusicJobs(_folder);
+        SheetMusicPiece piece(int i) => new("mutopia:" + i, "Score " + i, "Composer",
+            null, null, null, "Public Domain", "https://www.mutopiaproject.org/ftp/score.ly",
+            "https://www.mutopiaproject.org/ftp/score-a4.pdf");
+
+        Assert.NotNull(jobs.Enqueue("owner", piece(1)));
+        Assert.NotNull(jobs.Enqueue("owner", piece(2)));
+        Assert.Null(jobs.Enqueue("owner", piece(3)));
+        Assert.NotNull(jobs.Enqueue("other-owner", piece(3)));
+    }
 }
