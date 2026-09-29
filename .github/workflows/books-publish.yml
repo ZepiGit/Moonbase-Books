@@ -64,10 +64,10 @@ jobs:
           set -euo pipefail
           tag=v2.3.1.101-books.2
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo 'Release already exists; refusing to overwrite it' >&2
-            exit 1
+            gh release upload "$tag" dist/* --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" dist/* --repo "$GITHUB_REPOSITORY" \
+              --target "$SOURCE_SHA" --prerelease \
+              --title 'Moonbase Books 2.3.1.101 — Preview 2' \
+              --notes-file docs/PREVIEW2_RELEASE.md
           fi
-          gh release create "$tag" dist/* --repo "$GITHUB_REPOSITORY" \
-            --target "$SOURCE_SHA" --prerelease \
-            --title 'Moonbase Books 2.3.1.101 — Preview 2' \
-            --notes-file docs/PREVIEW2_RELEASE.md
