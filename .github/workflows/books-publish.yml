@@ -1,0 +1,73 @@
+name: Publish Moonbase Books Preview 2
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Moonbase Books plugin build run ID
+        required: true
+        type: string
+      source_sha:
+        description: Exact plugin source commit built by that run
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify source and build run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          test "$SOURCE_SHA" = 'b3df72713b7e9acd3c864d5cea0c2fbe72c2cf8a'
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" > /tmp/run.json
+          python3 - <<'PY'
+          import json, os
+          run = json.load(open('/tmp/run.json'))
+          assert run['head_sha'] == os.environ['SOURCE_SHA']
+          assert run['status'] == 'completed' and run['conclusion'] == 'success'
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          name: moonbase-books-jellyfin
+          path: dist
+      - name: Verify plugin and pinned web source
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum -c SHA256SUMS
+          python3 - <<'PY'
+          import json, zipfile
+          source = open('SOURCE_REVISIONS.txt').read()
+          assert 'Plugin: b3df72713b7e9acd3c864d5cea0c2fbe72c2cf8a' in source
+          assert 'Apps: 735d6ce24244c5cbc771e349bdff259874615025' in source
+          with zipfile.ZipFile('Moonbase_Books_Jellyfin_v2.3.1.101.zip') as archive:
+              meta = json.loads(archive.read('meta.json'))
+              assert meta['version'] == '2.3.1.101' and meta['autoUpdate'] is False
+              assert len(json.loads(archive.read('deployment/sheetmusic-catalog.json'))) == 1070
+          PY
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          tag=v2.3.1.101-books.2
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to overwrite it' >&2
+            exit 1
+          fi
+          gh release create "$tag" dist/* --repo "$GITHUB_REPOSITORY" \
+            --target "$SOURCE_SHA" --prerelease \
+            --title 'Moonbase Books 2.3.1.101 — Preview 2' \
+            --notes-file docs/PREVIEW2_RELEASE.md
